@@ -13,6 +13,7 @@ import { WagmiConfig, createClient, configureChains } from 'wagmi'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { publicProvider } from 'wagmi/providers/public'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
+import { WalletChatProvider, WalletChatWidget } from 'react-wallet-chat'
 
 import {
   ReservoirKitProvider,
@@ -146,7 +147,10 @@ function MyApp({
                 options={{ initialChainId: 0 }}
               >
                 <ToastContextProvider>
-                  <FunctionalComponent {...pageProps} />
+                  <WalletChatProvider>
+                    <FunctionalComponent {...pageProps} />
+                    <WalletChatWidget />
+                  </WalletChatProvider>
                 </ToastContextProvider>
               </ConnectKitProvider>
             </Tooltip.Provider>

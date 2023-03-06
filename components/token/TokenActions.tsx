@@ -8,6 +8,7 @@ import { useRouter } from 'next/router'
 import { ComponentPropsWithoutRef, FC, useState } from 'react'
 import { MutatorCallback } from 'swr'
 import { useAccount } from 'wagmi'
+import { ChatWithOwner } from 'react-wallet-chat'
 
 type Props = {
   token: ReturnType<typeof useTokens>['data'][0]
@@ -56,7 +57,7 @@ export const TokenActions: FC<Props> = ({
 
   return (
     <Grid
-      align="center"
+      align='center'
       css={{
         gap: '$4',
         gridTemplateColumns: 'repeat(1,minmax(0,1fr))',
@@ -122,6 +123,13 @@ export const TokenActions: FC<Props> = ({
           collectionId={token?.token?.collection?.id}
           mutate={mutate}
           buttonCss={buttonCss}
+        />
+      )}
+
+      {token?.token?.owner && (
+        <ChatWithOwner
+          owner={token?.token?.owner}
+          render={<Button css={buttonCss} color='gray3' />}
         />
       )}
 
