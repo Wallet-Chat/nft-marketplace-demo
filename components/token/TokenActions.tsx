@@ -128,7 +128,7 @@ export const TokenActions: FC<Props> = ({
 
       {token?.token?.owner && (
         <ChatWithOwner
-          owner={token?.token?.owner}
+          ownerAddress={token?.token?.owner}
           render={<Button css={buttonCss} color='gray3' />}
         />
       )}
