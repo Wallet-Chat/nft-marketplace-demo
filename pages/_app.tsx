@@ -9,7 +9,7 @@ import { default as NextApp } from 'next/app'
 import { ThemeProvider, useTheme } from 'next-themes'
 import { darkTheme, globalReset } from 'stitches.config'
 import { ConnectKitProvider, getDefaultClient } from 'connectkit'
-import { WagmiConfig, createClient, configureChains } from 'wagmi'
+import { WagmiConfig, createClient, configureChains, useAccount } from 'wagmi'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { publicProvider } from 'wagmi/providers/public'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
@@ -73,8 +73,8 @@ const reservoirKitThemeOverrides = {
 function AppWrapper(props: AppProps & { baseUrl: string }) {
   return (
     <ThemeProvider
-      attribute="class"
-      defaultTheme="dark"
+    attribute="class"
+    defaultTheme="dark"
       value={{
         dark: darkTheme.className,
         light: 'light',
@@ -114,6 +114,8 @@ function MyApp({
 
   const FunctionalComponent = Component as FC
 
+  const { connector: activeConnector } = useAccount()
+
   return (
     <HotkeysProvider>
       <ThemeProvider
@@ -149,7 +151,7 @@ function MyApp({
                 <ToastContextProvider>
                   <WalletChatProvider>
                     <FunctionalComponent {...pageProps} />
-                    <WalletChatWidget />
+                    <WalletChatWidget provider={activeConnector} />
                   </WalletChatProvider>
                 </ToastContextProvider>
               </ConnectKitProvider>
