@@ -58,11 +58,16 @@ Reservoir Market v2 is lightly configurable with the configurations below. You c
 | GOERLI_RESERVOIR_API_KEY | `false` | Goerli Reservoir API key provided by the Reservoir Protocol. [Get your own API key](https://reservoir.tools/request-api-key). | 123e4567-e89b-12d3-a456-426614174000 |
 | POLYGON_RESERVOIR_API_KEY | `false` | Polygon Reservoir API key provided by the Reservoir Protocol. [Get your own API key](https://reservoir.tools/request-api-key). | 123e4567-e89b-12d3-a456-426614174000 |
 | NEXT_PUBLIC_ALCHEMY_ID | `true` | Alchemy API key required for removing rate limiting restrictions. [Get your own API key here](https://docs.alchemy.com/alchemy/introduction/getting-started#1.create-an-alchemy-key). | 123e4567-e89b-12d3-a456-426614174000 |
-| NEXT_PUBLIC_COLLECTION_SET_ID | `false` | Use this to configure a community marketplace. Generate your collection set ID [here](https://docs.reservoir.tools/reference/postcollectionssetsv1). | f566ba09c14f56aedeed3f77e3ae7f5ff28b9177714d3827a87b7a182f8f90ff |
-| NEXT_PUBLIC_COMMUNITY | `false` | Use this to configure a community marketplace. Note: Community IDs are only available for certain communities. | artblocks |
+| NEXT_PUBLIC_ETH_COLLECTION_SET_ID | `false` | Use this to configure a community marketplace. This will only impact the mainnet network. Generate your collection set ID [here](https://docs.reservoir.tools/reference/postcollectionssetsv1). | f566ba09c14f56aedeed3f77e3ae7f5ff28b9177714d3827a87b7a182f8f90ff |
+| NEXT_PUBLIC_POLYGON_COLLECTION_SET_ID | `false` | Use this to configure a community marketplace. This will only impact the polygon network. Generate your collection set ID [here](https://docs.reservoir.tools/reference/postcollectionssetsv1). | f566ba09c14f56aedeed3f77e3ae7f5ff28b9177714d3827a87b7a182f8f90ff |
+| NEXT_PUBLIC_GOERLI_COLLECTION_SET_ID | `false` | Use this to configure a community marketplace. This will only impact the goerli network. Generate your collection set ID [here](https://docs.reservoir.tools/reference/postcollectionssetsv1). | f566ba09c14f56aedeed3f77e3ae7f5ff28b9177714d3827a87b7a182f8f90ff |
+| NEXT_PUBLIC_ETH_COMMUNITY | `false` | Use this to configure a community marketplace. Note: Community IDs are only available for certain communities. This will only impact the mainnet network. | artblocks |
+| NEXT_PUBLIC_POLYGON_COMMUNITY | `false` | Use this to configure a community marketplace. Note: Community IDs are only available for certain communities. This will only impact the polygon network | artblocks |
+| NEXT_PUBLIC_GOERLI_COMMUNITY | `false` | Use this to configure a community marketplace. Note: Community IDs are only available for certain communities. This will only impact the goerli network | artblocks |
 | NEXT_PUBLIC_NORMALIZE_ROYALTIES | `false` | Enables royalty normalization. Refer to [docs](https://docs.reservoir.tools/docs/normalized-royalties) for more info. | true/false |
 | NEXT_PUBLIC_DATADOG_CLIENT_TOKEN | `false` | Datadog client token for configuring analytics. | pubdaddswww4dad449dadas12ada123bae |
 | NEXT_PUBLIC_DATADOG_APPLICATION_ID | `false` | Datadog application id for configuring analytics. | 123cccbb-1234-1111-4411-abc12345612afgds |
+| NEXT_PUBLIC_MARKETPLACE_SOURCE | `false` | Marketplace source, used to attribute a source to orders. Must be a valid domain | reservoir.tools |
 
 In addition to the configuration above we've also added comments prefixed with `CONFIGURABLE:` throughout the app pointing out some pieces of code where you could customize functionality. After cloning the app make sure to search the repo for the aforementioned prefix.
 

@@ -1,23 +1,28 @@
 import { GetStaticProps, InferGetStaticPropsType, NextPage } from 'next'
-import { Text, Flex, Box, Button } from 'components/primitives'
+import { Text, Flex, Box } from 'components/primitives'
 import Layout from 'components/Layout'
-import { ComponentPropsWithoutRef, useContext, useState } from 'react'
-import { Footer } from 'components/home/Footer'
+import {
+  ComponentPropsWithoutRef,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { useMediaQuery } from 'react-responsive'
 import { useMarketplaceChain, useMounted } from 'hooks'
-import { useAccount } from 'wagmi'
 import { paths } from '@reservoir0x/reservoir-sdk'
 import { useCollections } from '@reservoir0x/reservoir-kit-ui'
 import fetcher from 'utils/fetcher'
-import { NORMALIZE_ROYALTIES } from './_app'
+import { NORMALIZE_ROYALTIES } from '../_app'
 import supportedChains from 'utils/chains'
-import Link from 'next/link'
-import ChainToggle from 'components/common/ChainToggle'
+import { CollectionRankingsTable } from 'components/rankings/CollectionRankingsTable'
+import { useIntersectionObserver } from 'usehooks-ts'
+import LoadingSpinner from 'components/common/LoadingSpinner'
 import CollectionsTimeDropdown, {
   CollectionsSortingOption,
 } from 'components/common/CollectionsTimeDropdown'
+import ChainToggle from 'components/common/ChainToggle'
 import { Head } from 'components/Head'
-import { CollectionRankingsTable } from 'components/rankings/CollectionRankingsTable'
 import { ChainContext } from 'context/ChainContextProvider'
 
 type Props = InferGetStaticPropsType<typeof getStaticProps>
@@ -29,10 +34,9 @@ const IndexPage: NextPage<Props> = ({ ssr }) => {
   const [sortByTime, setSortByTime] =
     useState<CollectionsSortingOption>('1DayVolume')
   const marketplaceChain = useMarketplaceChain()
-  const { isDisconnected } = useAccount()
 
   let collectionQuery: Parameters<typeof useCollections>['0'] = {
-    limit: 10,
+    limit: 20,
     sortBy: sortByTime,
     includeTopBid: true,
   }
@@ -45,11 +49,24 @@ const IndexPage: NextPage<Props> = ({ ssr }) => {
     collectionQuery.community = chain.community
   }
 
-  const { data, isValidating } = useCollections(collectionQuery, {
-    fallbackData: [ssr.collections[marketplaceChain.id]],
-  })
+  const { data, fetchNextPage, isFetchingPage, isValidating } = useCollections(
+    collectionQuery,
+    {
+      fallbackData: [ssr.collections[marketplaceChain.id]],
+    }
+  )
 
   let collections = data || []
+
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+  const loadMoreObserver = useIntersectionObserver(loadMoreRef, {})
+
+  useEffect(() => {
+    let isVisible = !!loadMoreObserver?.isIntersecting
+    if (isVisible) {
+      fetchNextPage()
+    }
+  }, [loadMoreObserver?.isIntersecting])
 
   let volumeKey: ComponentPropsWithoutRef<
     typeof CollectionRankingsTable
@@ -79,27 +96,6 @@ const IndexPage: NextPage<Props> = ({ ssr }) => {
           },
         }}
       >
-        {isDisconnected && (
-          <Flex
-            direction="column"
-            align="center"
-            css={{ mx: 'auto', maxWidth: 728, pt: '$5', textAlign: 'center' }}
-          >
-            <Text style="h3" css={{ mb: 24 }}>
-              Open Source Marketplace
-            </Text>
-            <Text style="body1" css={{ mb: 48 }}>
-              Reservoir Marketplace is an open-source project that showcases the
-              latest and greatest features of the Reservoir Platform.
-            </Text>
-            <a
-              href="https://github.com/reservoirprotocol/marketplace-v2"
-              target="_blank"
-            >
-              <Button color="gray3">View Source Code</Button>
-            </a>
-          </Flex>
-        )}
         <Flex css={{ my: '$6', gap: 65 }} direction="column">
           <Flex
             justify="between"
@@ -114,7 +110,7 @@ const IndexPage: NextPage<Props> = ({ ssr }) => {
             }}
           >
             <Text style="h4" as="h4">
-              Popular Collections
+              Collection Rankings
             </Text>
             <Flex align="center" css={{ gap: '$4' }}>
               <CollectionsTimeDropdown
@@ -130,25 +126,22 @@ const IndexPage: NextPage<Props> = ({ ssr }) => {
           {isSSR || !isMounted ? null : (
             <CollectionRankingsTable
               collections={collections}
-              loading={isValidating}
               volumeKey={volumeKey}
+              loading={isValidating}
             />
           )}
-          <Box css={{ alignSelf: 'center' }}>
-            <Link href="/collection-rankings">
-              <Button
-                css={{
-                  minWidth: 224,
-                  justifyContent: 'center',
-                }}
-                size="large"
-              >
-                View All
-              </Button>
-            </Link>
-          </Box>
+          <Box
+            ref={loadMoreRef}
+            css={{
+              display: isFetchingPage ? 'none' : 'block',
+            }}
+          ></Box>
         </Flex>
-        <Footer />
+        {(isFetchingPage || isValidating) && (
+          <Flex align="center" justify="center" css={{ py: '$4' }}>
+            <LoadingSpinner />
+          </Flex>
+        )}
       </Box>
     </Layout>
   )
@@ -163,12 +156,12 @@ export const getStaticProps: GetStaticProps<{
     collections: ChainCollections
   }
 }> = async () => {
-  let collectionQuery: paths['/collections/v5']['get']['parameters']['query'] =
+  const collectionQuery: paths['/collections/v5']['get']['parameters']['query'] =
     {
       sortBy: '1DayVolume',
       normalizeRoyalties: NORMALIZE_ROYALTIES,
+      limit: 20,
       includeTopBid: true,
-      limit: 10,
     }
 
   const promises: ReturnType<typeof fetcher>[] = []

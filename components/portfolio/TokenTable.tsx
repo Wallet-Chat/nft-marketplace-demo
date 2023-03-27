@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef } from 'react'
+import { FC, useContext, useEffect, useRef } from 'react'
 import { useMediaQuery } from 'react-responsive'
 import {
   Text,
@@ -24,18 +24,23 @@ import Link from 'next/link'
 import { MutatorCallback } from 'swr'
 import { Address } from 'wagmi'
 import { useMarketplaceChain } from 'hooks'
-import { COLLECTION_SET_ID, COMMUNITY } from 'pages/_app'
 import wrappedContracts from 'utils/wrappedContracts'
 import { NAVBAR_HEIGHT } from 'components/navbar'
+import { ChainContext } from 'context/ChainContextProvider'
 
 type Props = {
   address: Address | undefined
   filterCollection: string | undefined
+  isLoading?: boolean
 }
 
 const desktopTemplateColumns = '1.25fr repeat(3, .75fr) 1.5fr'
 
-export const TokenTable: FC<Props> = ({ address, filterCollection }) => {
+export const TokenTable: FC<Props> = ({
+  address,
+  isLoading,
+  filterCollection,
+}) => {
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const loadMoreObserver = useIntersectionObserver(loadMoreRef, {})
 
@@ -45,10 +50,12 @@ export const TokenTable: FC<Props> = ({ address, filterCollection }) => {
     includeTopBid: true,
   }
 
-  if (COLLECTION_SET_ID) {
-    tokenQuery.collectionsSetId = COLLECTION_SET_ID
-  } else if (COMMUNITY) {
-    tokenQuery.community = COMMUNITY
+  const { chain } = useContext(ChainContext)
+
+  if (chain.collectionSetId) {
+    tokenQuery.collectionsSetId = chain.collectionSetId
+  } else if (chain.community) {
+    tokenQuery.community = chain.community
   }
 
   const {
@@ -79,6 +86,10 @@ export const TokenTable: FC<Props> = ({ address, filterCollection }) => {
           </Text>
           <Text css={{ color: '$gray11' }}>No items found</Text>
         </Flex>
+      ) : isLoading || isValidating ? (
+        <Flex align="center" justify="center" css={{ py: '$6' }}>
+          <LoadingSpinner />
+        </Flex>
       ) : (
         <Flex direction="column" css={{ width: '100%' }}>
           <TableHeading />
@@ -94,11 +105,6 @@ export const TokenTable: FC<Props> = ({ address, filterCollection }) => {
             )
           })}
           <div ref={loadMoreRef}></div>
-        </Flex>
-      )}
-      {isValidating && (
-        <Flex align="center" justify="center" css={{ py: '$6' }}>
-          <LoadingSpinner />
         </Flex>
       )}
     </>

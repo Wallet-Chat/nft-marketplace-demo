@@ -8,7 +8,6 @@ import Image from 'next/image'
 import { ConnectWalletButton } from 'components/ConnectWalletButton'
 import NavItem from './NavItem'
 import ThemeSwitcher from './ThemeSwitcher'
-import ChainSwitcher from './ChainSwitcher'
 import HamburgerMenu from './HamburgerMenu'
 import MobileSearch from './MobileSearch'
 import { useTheme } from 'next-themes'
@@ -73,7 +72,6 @@ const Navbar = () => {
       </Box>
       <Flex align="center" css={{ gap: '$3' }}>
         <MobileSearch key={`${router.asPath}-search`} />
-        <ChainSwitcher />
         <CartButton />
         <HamburgerMenu key={`${router.asPath}-hamburger`} />
       </Flex>
@@ -127,8 +125,10 @@ const Navbar = () => {
             />
           </Box>
           <Flex align="center" css={{ gap: '$5', mr: '$5' }}>
-            <Link href="/">
-              <NavItem active={router.pathname == '/'}>Explore</NavItem>
+            <Link href="/collection-rankings">
+              <NavItem active={router.pathname == '/collection-rankings'}>
+                Collections
+              </NavItem>
             </Link>
             <Link href="/portfolio">
               <NavItem active={router.pathname == '/portfolio'}>Sell</NavItem>
@@ -143,7 +143,6 @@ const Navbar = () => {
       <Flex css={{ gap: '$3' }} justify="end" align="center">
         <ThemeSwitcher />
         <CartButton />
-        <ChainSwitcher />
         {isConnected ? (
           <ProfileDropdown />
         ) : (

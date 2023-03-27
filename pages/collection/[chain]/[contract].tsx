@@ -13,7 +13,7 @@ import {
 } from '@reservoir0x/reservoir-kit-ui'
 import { paths } from '@reservoir0x/reservoir-sdk'
 import Layout from 'components/Layout'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { truncateAddress } from 'utils/truncate'
 import StatHeader from 'components/collections/StatHeader'
 import CollectionActions from 'components/collections/CollectionActions'
@@ -31,7 +31,7 @@ import { useMediaQuery } from 'react-responsive'
 import { TabsList, TabsTrigger, TabsContent } from 'components/primitives/Tab'
 import * as Tabs from '@radix-ui/react-tabs'
 import { NAVBAR_HEIGHT } from 'components/navbar'
-import { CollectionAcivityTable } from 'components/collections/CollectionActivityTable'
+import { CollectionActivityTable } from 'components/collections/CollectionActivityTable'
 import { ActivityFilters } from 'components/common/ActivityFilters'
 import { MobileAttributeFilters } from 'components/collections/filters/MobileAttributeFilters'
 import { MobileActivityFilters } from 'components/common/MobileActivityFilters'
@@ -41,10 +41,11 @@ import { NORMALIZE_ROYALTIES } from 'pages/_app'
 import { faCopy, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import supportedChains, { DefaultChain } from 'utils/chains'
-import Head from 'next/head'
+import { Head } from 'components/Head'
 import CopyText from 'components/common/CopyText'
 import { OpenSeaVerified } from 'components/common/OpenSeaVerified'
 import { Address, useAccount } from 'wagmi'
+import titleCase from 'utils/titleCase'
 
 type ActivityTypes = Exclude<
   NonNullable<
@@ -68,6 +69,7 @@ const CollectionPage: NextPage<Props> = ({ id, ssr }) => {
   const [initialTokenFallbackData, setInitialTokenFallbackData] = useState(true)
   const isMounted = useMounted()
   const isSmallDevice = useMediaQuery({ maxWidth: 905 }) && isMounted
+  const smallSubtitle = useMediaQuery({ maxWidth: 1150 }) && isMounted
   const [playingElement, setPlayingElement] = useState<
     HTMLAudioElement | HTMLVideoElement | null
   >()
@@ -97,6 +99,7 @@ const CollectionPage: NextPage<Props> = ({ id, ssr }) => {
     collection: id,
     sortBy: 'floorAskPrice',
     sortDirection: 'asc',
+    includeQuantity: true,
   }
 
   const sortDirection = router.query['sortDirection']?.toString()
@@ -121,6 +124,8 @@ const CollectionPage: NextPage<Props> = ({ id, ssr }) => {
     data: tokens,
     mutate,
     fetchNextPage,
+    setSize,
+    resetCache,
     isFetchingInitialData,
     isFetchingPage,
     hasNextPage,
@@ -130,14 +135,25 @@ const CollectionPage: NextPage<Props> = ({ id, ssr }) => {
 
   const attributesData = useAttributes(id)
 
-  const attributes =
-    attributesData.data?.filter(
-      (attribute) => attribute.kind != 'number' && attribute.kind != 'range'
-    ) || []
+  const attributes = useMemo(() => {
+    if (!attributesData.data) {
+      return []
+    }
+    return attributesData.data
+      ?.filter(
+        (attribute) => attribute.kind != 'number' && attribute.kind != 'range'
+      )
+      .sort((a, b) => a.key.localeCompare(b.key))
+  }, [attributesData.data])
 
   if (attributeFiltersOpen && attributesData.response && !attributes.length) {
     setAttributeFiltersOpen(false)
   }
+
+  let creatorRoyalties = collection?.royalties?.bps
+    ? collection?.royalties?.bps * 0.01
+    : 0
+  let chain = titleCase(router.query.chain as string)
 
   const rarityEnabledCollection = Boolean(
     collection?.tokenCount &&
@@ -145,6 +161,9 @@ const CollectionPage: NextPage<Props> = ({ id, ssr }) => {
       attributes &&
       attributes?.length >= 2
   )
+
+  //@ts-ignore: Ignore until we regenerate the types
+  const contractKind = collection?.contractKind?.toUpperCase()
 
   useEffect(() => {
     const isVisible = !!loadMoreObserver?.isIntersecting
@@ -161,29 +180,12 @@ const CollectionPage: NextPage<Props> = ({ id, ssr }) => {
 
   return (
     <Layout>
-      <Head>
-        <title>{ssr?.collection?.collections?.[0]?.name}</title>
-        <meta
-          name="description"
-          content={ssr?.collection?.collections?.[0]?.description as string}
-        />
-        <meta
-          property="twitter:title"
-          content={ssr?.collection?.collections?.[0]?.name}
-        />
-        <meta
-          name="twitter:image"
-          content={ssr?.collection?.collections?.[0]?.banner}
-        />
-        <meta
-          property="og:title"
-          content={ssr?.collection?.collections?.[0]?.name}
-        />
-        <meta
-          property="og:image"
-          content={ssr?.collection?.collections?.[0]?.banner}
-        />
-      </Head>
+      <Head
+        ogImage={ssr?.collection?.collections?.[0]?.banner}
+        title={ssr?.collection?.collections?.[0]?.name}
+        description={ssr?.collection?.collections?.[0]?.description as string}
+      />
+
       {collection ? (
         <Flex
           direction="column"
@@ -220,26 +222,117 @@ const CollectionPage: NextPage<Props> = ({ id, ssr }) => {
                     />
                   </Flex>
 
-                  <CopyText
-                    text={collection.id as string}
-                    css={{ width: 'max-content' }}
-                  >
-                    <Flex css={{ gap: '$2', mt: '$2', width: 'max-content' }}>
-                      <Text style="body1" css={{ color: '$gray11' }} as="p">
-                        {truncateAddress(collection.id as string)}
-                      </Text>
-                      <Box css={{ color: '$gray10' }}>
-                        <FontAwesomeIcon icon={faCopy} width={16} height={16} />
+                  {!smallSubtitle && (
+                    <Flex align="end" css={{ gap: 24 }}>
+                      <CopyText
+                        text={collection.id as string}
+                        css={{ width: 'max-content' }}
+                      >
+                        <Flex css={{ gap: '$2', width: 'max-content' }}>
+                          {!isSmallDevice && (
+                            <Text style="body1" color="subtle">
+                              Collection
+                            </Text>
+                          )}
+                          <Text
+                            style="body1"
+                            color={isSmallDevice ? 'subtle' : undefined}
+                            as="p"
+                          >
+                            {truncateAddress(collection.id as string)}
+                          </Text>
+                          <Box css={{ color: '$gray10' }}>
+                            <FontAwesomeIcon
+                              icon={faCopy}
+                              width={16}
+                              height={16}
+                            />
+                          </Box>
+                        </Flex>
+                      </CopyText>
+                      <Box>
+                        <Text style="body1" color="subtle">
+                          Token Standard{' '}
+                        </Text>
+                        <Text style="body1">{contractKind}</Text>
+                      </Box>
+                      <Box>
+                        <Text style="body1" color="subtle">
+                          Chain{' '}
+                        </Text>
+                        <Text style="body1">{chain}</Text>
+                      </Box>
+                      <Box>
+                        <Text style="body1" color="subtle">
+                          Creator Earnings
+                        </Text>
+                        <Text style="body1"> {creatorRoyalties}%</Text>
                       </Box>
                     </Flex>
-                  </CopyText>
+                  )}
                 </Box>
               </Flex>
             </Flex>
             <CollectionActions collection={collection} />
           </Flex>
+          {smallSubtitle && (
+            <Grid
+              css={{
+                gap: 12,
+                mb: 24,
+                gridTemplateColumns: '1fr 1fr',
+                maxWidth: 550,
+              }}
+            >
+              <CopyText
+                text={collection.id as string}
+                css={{ width: 'max-content' }}
+              >
+                <Flex css={{ width: 'max-content' }} direction="column">
+                  <Text style="body1" color="subtle">
+                    Collection
+                  </Text>
+                  <Flex css={{ gap: '$2' }}>
+                    <Text style="body1" as="p">
+                      {truncateAddress(collection.id as string)}
+                    </Text>
+                    <Box css={{ color: '$gray10' }}>
+                      <FontAwesomeIcon icon={faCopy} width={16} height={16} />
+                    </Box>
+                  </Flex>
+                </Flex>
+              </CopyText>
+              <Flex direction="column">
+                <Text style="body1" color="subtle">
+                  Token Standard{' '}
+                </Text>
+                <Text style="body1">{contractKind}</Text>
+              </Flex>
+              <Flex direction="column">
+                <Text style="body1" color="subtle">
+                  Chain{' '}
+                </Text>
+                <Text style="body1">{chain}</Text>
+              </Flex>
+              <Flex direction="column">
+                <Text style="body1" color="subtle">
+                  Creator Earnings
+                </Text>
+                <Text style="body1"> {creatorRoyalties}%</Text>
+              </Flex>
+            </Grid>
+          )}
           <StatHeader collection={collection} />
-          <Tabs.Root defaultValue="items">
+          <Tabs.Root
+            defaultValue="items"
+            onValueChange={(value) => {
+              if (value === 'items') {
+                resetCache()
+                setSize(1)
+                mutate()
+              }
+            }}
+          >
             <TabsList>
               <TabsTrigger value="items">Items</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
@@ -328,6 +421,9 @@ const CollectionPage: NextPage<Props> = ({ id, ssr }) => {
                           <TokenCard
                             key={i}
                             token={token}
+                            orderQuantity={
+                              token?.market?.floorAsk?.quantityRemaining
+                            }
                             address={address as Address}
                             mutate={mutate}
                             rarityEnabled={rarityEnabledCollection}
@@ -415,7 +511,7 @@ const CollectionPage: NextPage<Props> = ({ id, ssr }) => {
                       setOpen={setActivityFiltersOpen}
                     />
                   )}
-                  <CollectionAcivityTable
+                  <CollectionActivityTable
                     id={id}
                     activityTypes={activityTypes}
                   />
@@ -447,7 +543,7 @@ export const getStaticProps: GetStaticProps<{
   id: string | undefined
 }> = async ({ params }) => {
   const id = params?.contract?.toString()
-  const { reservoirBaseUrl, apiKey } =
+  const { reservoirBaseUrl, apiKey, routePrefix } =
     supportedChains.find((chain) => params?.chain === chain.routePrefix) ||
     DefaultChain
   const headers: RequestInit = {
@@ -477,6 +573,7 @@ export const getStaticProps: GetStaticProps<{
     normalizeRoyalties: NORMALIZE_ROYALTIES,
     includeDynamicPricing: true,
     includeAttributes: true,
+    includeQuantity: true,
   }
 
   const tokensPromise = fetcher(
@@ -502,6 +599,20 @@ export const getStaticProps: GetStaticProps<{
     tokens?.tokens?.some(
       (token) => (token?.token?.attributes?.length || 0) > 0
     ) || false
+
+  if (
+    collection &&
+    collection.collections?.[0].contractKind === 'erc1155' &&
+    Number(collection?.collections?.[0].tokenCount) === 1 &&
+    tokens?.tokens?.[0].token?.tokenId !== undefined
+  ) {
+    return {
+      redirect: {
+        destination: `/collection/${routePrefix}/${id}/${tokens.tokens[0].token.tokenId}`,
+        permanent: false,
+      },
+    }
+  }
 
   return {
     props: { ssr: { collection, tokens, hasAttributes }, id },

@@ -1,59 +1,76 @@
 import {
   faArrowLeft,
+  faChevronDown,
   faCircleExclamation,
   faRefresh,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { paths } from '@reservoir0x/reservoir-sdk'
+import * as Tabs from '@radix-ui/react-tabs'
 import {
   TokenMedia,
   useAttributes,
   useCollections,
   useDynamicTokens,
+  useTokenActivity,
   useTokenOpenseaBanned,
   useUserTokens,
 } from '@reservoir0x/reservoir-kit-ui'
+import { paths } from '@reservoir0x/reservoir-sdk'
+import { ActivityFilters } from 'components/token/ActivityFilters'
+import { spin } from 'components/common/LoadingSpinner'
+import { MobileActivityFilters } from 'components/common/MobileActivityFilters'
+import { OpenSeaVerified } from 'components/common/OpenSeaVerified'
 import Layout from 'components/Layout'
 import {
-  Flex,
-  Text,
-  Button,
-  Tooltip,
   Anchor,
-  Grid,
   Box,
+  Button,
+  Flex,
+  Grid,
+  Text,
+  Tooltip,
 } from 'components/primitives'
-import { TabsList, TabsTrigger, TabsContent } from 'components/primitives/Tab'
-import * as Tabs from '@radix-ui/react-tabs'
+import { Dropdown } from 'components/primitives/Dropdown'
+import { TabsContent, TabsList, TabsTrigger } from 'components/primitives/Tab'
 import AttributeCard from 'components/token/AttributeCard'
+import FullscreenMedia from 'components/token/FullscreenMedia'
 import { PriceData } from 'components/token/PriceData'
 import RarityRank from 'components/token/RarityRank'
 import { TokenActions } from 'components/token/TokenActions'
+import { TokenActivityTable } from 'components/token/ActivityTable'
+import { TokenInfo } from 'components/token/TokenInfo'
+import { ToastContext } from 'context/ToastContextProvider'
+import { useENSResolver, useMarketplaceChain, useMounted } from 'hooks'
 import {
-  GetStaticProps,
   GetStaticPaths,
+  GetStaticProps,
   InferGetStaticPropsType,
   NextPage,
 } from 'next'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
+import { NORMALIZE_ROYALTIES } from 'pages/_app'
+import { useContext, useEffect, useState } from 'react'
 import { jsNumberForAddress } from 'react-jazzicon'
 import Jazzicon from 'react-jazzicon/dist/Jazzicon'
-import fetcher from 'utils/fetcher'
-import { useAccount } from 'wagmi'
-import { TokenInfo } from 'components/token/TokenInfo'
 import { useMediaQuery } from 'react-responsive'
-import FullscreenMedia from 'components/token/FullscreenMedia'
-import { useContext, useEffect, useState } from 'react'
-import { ToastContext } from 'context/ToastContextProvider'
-import { NORMALIZE_ROYALTIES } from 'pages/_app'
-import { useENSResolver, useMarketplaceChain, useMounted } from 'hooks'
-import { useRouter } from 'next/router'
 import supportedChains, { DefaultChain } from 'utils/chains'
-import { spin } from 'components/common/LoadingSpinner'
-import Head from 'next/head'
-import { OpenSeaVerified } from 'components/common/OpenSeaVerified'
+import fetcher from 'utils/fetcher'
+import { DATE_REGEX, timeTill } from 'utils/till'
+import titleCase from 'utils/titleCase'
+import { useAccount } from 'wagmi'
+import { Head } from 'components/Head'
 
 type Props = InferGetStaticPropsType<typeof getStaticProps>
+
+type ActivityTypes = Exclude<
+  NonNullable<
+    NonNullable<
+      Exclude<Parameters<typeof useTokenActivity>['1'], boolean>
+    >['types']
+  >,
+  string
+>
 
 const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
   const router = useRouter()
@@ -63,6 +80,10 @@ const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
   const isSmallDevice = useMediaQuery({ maxWidth: 900 }) && isMounted
   const [tabValue, setTabValue] = useState('info')
   const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const [activityFiltersOpen, setActivityFiltersOpen] = useState(true)
+  const [activityTypes, setActivityTypes] = useState<ActivityTypes>([])
+
   const { proxyApi } = useMarketplaceChain()
   const contract = collectionId ? collectionId?.split(':')[0] : undefined
   const { data: collections } = useCollections(
@@ -80,11 +101,13 @@ const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
       tokens: [`${contract}:${id}`],
       includeAttributes: true,
       includeTopBid: true,
+      includeQuantity: true,
     },
     {
       fallbackData: [ssr.tokens],
     }
   )
+
   const flagged = useTokenOpenseaBanned(collectionId, id)
   const token = tokens && tokens[0] ? tokens[0] : undefined
   const is1155 = token?.token?.kind === 'erc1155'
@@ -96,7 +119,7 @@ const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
     }
   )
 
-  const attributesData = useAttributes(id)
+  const attributesData = useAttributes(collectionId)
 
   let countOwned = 0
   if (is1155) {
@@ -117,11 +140,65 @@ const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
   const hasAttributes =
     token?.token?.attributes && token?.token?.attributes.length > 0
 
+  const trigger = (
+    <Button
+      color="gray3"
+      size="small"
+      css={{
+        justifyContent: 'space-between',
+        width: '336px',
+        px: '$2',
+        py: '$2',
+      }}
+    >
+      {isSmallDevice ? null : (
+        <Text style="body1">
+          {activityTypes.map(titleCase).join(', ') || 'All Events'}
+        </Text>
+      )}
+      <Text css={{ color: '$slate10' }}>
+        <FontAwesomeIcon icon={faChevronDown} width={16} height={16} />
+      </Text>
+    </Button>
+  )
+
   useEffect(() => {
-    isMounted && isSmallDevice && hasAttributes
-      ? setTabValue('attributes')
-      : setTabValue('info')
+    let tab = tabValue
+    const hasAttributesTab = isMounted && isSmallDevice && hasAttributes
+    if (hasAttributesTab) {
+      tab = 'attributes'
+    } else {
+      tab = 'info'
+    }
+
+    let deeplinkTab: string | null = null
+    if (typeof window !== 'undefined') {
+      const params = new URL(window.location.href).searchParams
+      deeplinkTab = params.get('tab')
+    }
+
+    if (deeplinkTab) {
+      switch (deeplinkTab) {
+        case 'attributes':
+          if (hasAttributesTab) {
+            tab = 'attributes'
+          }
+          break
+        case 'info':
+          tab = 'info'
+          break
+        case 'activity':
+          tab = 'activity'
+          break
+      }
+    }
+    setTabValue(tab)
   }, [isSmallDevice])
+
+  useEffect(() => {
+    router.query.tab = tabValue
+    router.push(router, undefined, { shallow: true })
+  }, [tabValue])
 
   const pageTitle = token?.token?.name
     ? token.token.name
@@ -129,20 +206,11 @@ const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
 
   return (
     <Layout>
-      <Head>
-        <title>{pageTitle}</title>
-        <meta name="description" content={collection?.description as string} />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta
-          name="twitter:image"
-          content={token?.token?.image || collection?.banner}
-        />
-        <meta name="og:title" content={pageTitle} />
-        <meta
-          property="og:image"
-          content={token?.token?.image || collection?.banner}
-        />
-      </Head>
+      <Head
+        ogImage={token?.token?.image || collection?.banner}
+        title={pageTitle}
+        description={collection?.description as string}
+      />
       <Flex
         justify="center"
         css={{
@@ -263,7 +331,7 @@ const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
           <Flex justify="between" align="center" css={{ mb: 20 }}>
             <Flex align="center" css={{ mr: '$2', gap: '$2' }}>
               <Link
-                href={`/collection/${router.query.chain}/${collection?.id}`}
+                href={`/collection/${router.query.chain}/${token?.token?.collection?.id}`}
                 legacyBehavior={true}
               >
                 <Anchor
@@ -276,7 +344,7 @@ const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
                 >
                   <FontAwesomeIcon icon={faArrowLeft} height={16} />
                   <Text css={{ color: 'inherit' }} style="subtitle1" ellipsify>
-                    {collection?.name}
+                    {token?.token?.collection?.name}
                   </Text>
                 </Anchor>
               </Link>
@@ -304,7 +372,7 @@ const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
                     body: JSON.stringify({ token: `${contract}:${id}` }),
                   }
                 )
-                  .then(({ response }) => {
+                  .then(({ data, response }) => {
                     if (response.status === 200) {
                       addToast?.({
                         title: 'Refresh token',
@@ -312,16 +380,22 @@ const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
                           'Request to refresh this token was accepted.',
                       })
                     } else {
-                      throw 'Request Failed'
+                      throw data
                     }
                     setIsRefreshing(false)
                   })
                   .catch((e) => {
+                    const ratelimit = DATE_REGEX.exec(e?.message)?.[0]
+
                     addToast?.({
                       title: 'Refresh token failed',
-                      description:
-                        'We have queued this item for an update, check back in a few.',
+                      description: ratelimit
+                        ? `This token was recently refreshed. The next available refresh is ${timeTill(
+                            ratelimit
+                          )}.`
+                        : `This token was recently refreshed. Please try again later.`,
                     })
+
                     setIsRefreshing(false)
                     throw e
                   })
@@ -413,14 +487,19 @@ const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
                 />
               )}
               <Tabs.Root
+                defaultValue=""
                 value={tabValue}
                 onValueChange={(value) => setTabValue(value)}
+                style={{
+                  paddingRight: 15,
+                }}
               >
                 <TabsList>
                   {isMounted && isSmallDevice && hasAttributes && (
                     <TabsTrigger value="attributes">Attributes</TabsTrigger>
                   )}
                   <TabsTrigger value="info">Info</TabsTrigger>
+                  <TabsTrigger value="activity">Activity</TabsTrigger>
                 </TabsList>
                 <TabsContent value="attributes">
                   {token?.token?.attributes && (
@@ -449,6 +528,32 @@ const IndexPage: NextPage<Props> = ({ id, collectionId, ssr }) => {
                   {collection && (
                     <TokenInfo token={token} collection={collection} />
                   )}
+                </TabsContent>
+                <TabsContent value="activity" css={{ mr: -15 }}>
+                  {isSmallDevice ? (
+                    <MobileActivityFilters
+                      activityTypes={activityTypes}
+                      setActivityTypes={setActivityTypes}
+                    />
+                  ) : (
+                    <Dropdown
+                      trigger={trigger}
+                      contentProps={{
+                        sideOffset: 8,
+                      }}
+                    >
+                      <ActivityFilters
+                        open={activityFiltersOpen}
+                        setOpen={setActivityFiltersOpen}
+                        activityTypes={activityTypes}
+                        setActivityTypes={setActivityTypes}
+                      />
+                    </Dropdown>
+                  )}
+                  <TokenActivityTable
+                    id={`${token.token?.collection?.id}:${token?.token?.tokenId}`}
+                    activityTypes={activityTypes}
+                  />
                 </TabsContent>
               </Tabs.Root>
             </>

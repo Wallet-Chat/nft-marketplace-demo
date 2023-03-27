@@ -32,6 +32,7 @@ type TokenCardProps = {
     e: SyntheticEvent<HTMLAudioElement | HTMLVideoElement, Event>
   ) => void
   tokenCount?: string
+  orderQuantity?: number
 }
 
 export default ({
@@ -41,6 +42,7 @@ export default ({
   addToCartEnabled = true,
   mutate,
   onMediaPlayed,
+  orderQuantity,
   tokenCount,
 }: TokenCardProps) => {
   const { addToast } = useContext(ToastContext)
@@ -79,15 +81,50 @@ export default ({
             px: '$2',
             py: '$1',
             mr: '$2',
-            backgroundColor: '$gray4',
             position: 'absolute',
             left: '$2',
             top: '$2',
             zIndex: 1,
             maxWidth: '50%',
+            backgroundColor: 'rgba(	38, 41, 43, 0.3)',
           }}
         >
-          <Text ellipsify>x{tokenCount}</Text>
+          <Text
+            css={{
+              color: '$whiteA12',
+            }}
+            ellipsify
+          >
+            x{tokenCount}
+          </Text>
+        </Flex>
+      )}
+      {orderQuantity && orderQuantity > 1 && (
+        <Flex
+          justify="center"
+          align="center"
+          css={{
+            borderRadius: 8,
+            px: '$2',
+            py: '$1',
+            mr: '$2',
+            position: 'absolute',
+            left: '$2',
+            top: '$2',
+            zIndex: 1,
+            maxWidth: '50%',
+            backgroundColor: 'rgba(	38, 41, 43, 0.3)',
+            backdropFilter: 'blur(2px)',
+          }}
+        >
+          <Text
+            css={{
+              color: '$whiteA12',
+            }}
+            ellipsify
+          >
+            x{orderQuantity}
+          </Text>
         </Flex>
       )}
       <Flex
@@ -221,19 +258,21 @@ export default ({
                 textOverflow: 'ellipsis',
               }}
             >
-              <FormatCryptoCurrency
-                logoHeight={18}
-                amount={token?.market?.floorAsk?.price?.amount?.decimal}
-                address={token?.market?.floorAsk?.price?.currency?.contract}
-                textStyle="h6"
-                css={{
-                  textOverflow: 'ellipsis',
-                  minWidth: 0,
-                  with: '100%',
-                  overflow: 'hidden',
-                }}
-                maximumFractionDigits={4}
-              />
+              {token?.market?.floorAsk?.price && (
+                <FormatCryptoCurrency
+                  logoHeight={18}
+                  amount={token?.market?.floorAsk?.price?.amount?.decimal}
+                  address={token?.market?.floorAsk?.price?.currency?.contract}
+                  textStyle="h6"
+                  css={{
+                    textOverflow: 'ellipsis',
+                    minWidth: 0,
+                    with: '100%',
+                    overflow: 'hidden',
+                  }}
+                  maximumFractionDigits={4}
+                />
+              )}
             </Box>
 
             <>
@@ -249,7 +288,7 @@ export default ({
               )}
             </>
           </Flex>
-          {token?.token?.lastBuy?.value && (
+          {token?.token?.lastBuy?.value ? (
             <Flex css={{ gap: '$2', marginTop: 'auto' }}>
               <Text css={{ color: '$gray11' }} style="subtitle3">
                 Last Sale
@@ -261,7 +300,7 @@ export default ({
                 maximumFractionDigits={4}
               />
             </Flex>
-          )}
+          ) : null}
         </Flex>
       </Link>
       {isOwner ? (
