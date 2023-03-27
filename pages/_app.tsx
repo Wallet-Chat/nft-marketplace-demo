@@ -126,9 +126,18 @@ function MyApp({
     }
   }, [theme])
 
+  const { connector: activeConnector } = useAccount()
+
   const FunctionalComponent = Component as FC
 
-  const { connector: activeConnector } = useAccount()
+  let source = process.env.NEXT_PUBLIC_MARKETPLACE_SOURCE
+
+  if (!source && process.env.NEXT_PUBLIC_HOST_URL) {
+    try {
+      const url = new URL(process.env.NEXT_PUBLIC_HOST_URL)
+      source = url.host
+    } catch (e) {}
+  }
 
   return (
     <HotkeysProvider>
