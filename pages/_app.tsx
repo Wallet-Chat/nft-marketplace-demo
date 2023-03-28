@@ -15,7 +15,13 @@ import {
   darkTheme as rainbowDarkTheme,
   lightTheme as rainbowLightTheme,
 } from '@rainbow-me/rainbowkit'
-import { WagmiConfig, createClient, configureChains, useAccount } from 'wagmi'
+import {
+  WagmiConfig,
+  createClient,
+  configureChains,
+  useAccount,
+  useNetwork,
+} from 'wagmi'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { publicProvider } from 'wagmi/providers/public'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
@@ -71,8 +77,8 @@ const reservoirKitThemeOverrides = {
 function AppWrapper(props: AppProps & { baseUrl: string }) {
   return (
     <ThemeProvider
-    attribute="class"
-    defaultTheme="dark"
+      attribute="class"
+      defaultTheme="dark"
       value={{
         dark: darkTheme.className,
         light: 'light',
@@ -126,7 +132,9 @@ function MyApp({
     }
   }, [theme])
 
-  const { connector: activeConnector } = useAccount()
+  const { address, connector: activeConnector } = useAccount()
+  const { chain } = useNetwork()
+  const chainId = chain?.id
 
   const FunctionalComponent = Component as FC
 
@@ -175,7 +183,17 @@ function MyApp({
                 <ToastContextProvider>
                   <WalletChatProvider>
                     <FunctionalComponent {...pageProps} />
-                    <WalletChatWidget provider={activeConnector} />
+                    <WalletChatWidget
+                      connectedWallet={
+                        address && activeConnector && chainId
+                          ? {
+                              account: address,
+                              walletName: activeConnector.name,
+                              chainId: chain.id,
+                            }
+                          : undefined
+                      }
+                    />
                   </WalletChatProvider>
                 </ToastContextProvider>
               </RainbowKitProvider>
