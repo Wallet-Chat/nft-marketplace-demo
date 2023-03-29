@@ -21,6 +21,7 @@ import {
   configureChains,
   useAccount,
   useNetwork,
+  useSigner,
 } from 'wagmi'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { publicProvider } from 'wagmi/providers/public'
@@ -132,6 +133,7 @@ function MyApp({
     }
   }, [theme])
 
+  const { data: signer } = useSigner()
   const { address, connector: activeConnector } = useAccount()
   const { chain } = useNetwork()
   const chainId = chain?.id
@@ -193,6 +195,7 @@ function MyApp({
                             }
                           : undefined
                       }
+                      signer={signer}
                     />
                   </WalletChatProvider>
                 </ToastContextProvider>
