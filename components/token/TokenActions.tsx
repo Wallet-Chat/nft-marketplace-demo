@@ -8,6 +8,7 @@ import CancelListing from 'components/buttons/CancelListing'
 import { Button, Flex, Grid, Tooltip, Text } from 'components/primitives'
 import { useRouter } from 'next/router'
 import { ComponentPropsWithoutRef, FC, useState } from 'react'
+import { ChatWithOwner } from 'react-wallet-chat'
 import { MutatorCallback } from 'swr'
 import { useAccount } from 'wagmi'
 
@@ -131,6 +132,12 @@ export const TokenActions: FC<Props> = ({
         />
       )}
 
+      {token?.token?.owner && (
+        <ChatWithOwner
+          ownerAddress={token?.token?.owner}
+          render={<Button css={buttonCss} color="gray3" />}
+        />
+      )}
       {(!isOwner || is1155) && (
         <Bid
           tokenId={token?.token?.tokenId}

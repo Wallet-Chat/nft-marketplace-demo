@@ -15,7 +15,14 @@ import {
   darkTheme as rainbowDarkTheme,
   lightTheme as rainbowLightTheme,
 } from '@rainbow-me/rainbowkit'
-import { WagmiConfig, createClient, configureChains } from 'wagmi'
+import {
+  WagmiConfig,
+  createClient,
+  configureChains,
+  useSignMessage,
+  useAccount,
+  useNetwork,
+} from 'wagmi'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { publicProvider } from 'wagmi/providers/public'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
@@ -33,6 +40,7 @@ import ToastContextProvider from 'context/ToastContextProvider'
 import supportedChains from 'utils/chains'
 import { useMarketplaceChain } from 'hooks'
 import ChainContextProvider from 'context/ChainContextProvider'
+import { WalletChatProvider, WalletChatWidget } from 'react-wallet-chat'
 
 //CONFIGURABLE: Use nextjs to load your own custom font: https://nextjs.org/docs/basic-features/font-optimization
 const inter = Inter({
@@ -125,6 +133,11 @@ function MyApp({
     }
   }, [theme])
 
+  const { signMessageAsync } = useSignMessage()
+  const { address, connector: activeConnector } = useAccount()
+  const { chain } = useNetwork()
+  const chainId = chain?.id
+
   const FunctionalComponent = Component as FC
 
   let source = process.env.NEXT_PUBLIC_MARKETPLACE_SOURCE
@@ -174,7 +187,21 @@ function MyApp({
                 modalSize="compact"
               >
                 <ToastContextProvider>
-                  <FunctionalComponent {...pageProps} />
+                  <WalletChatProvider>
+                    <FunctionalComponent {...pageProps} />
+
+                    <WalletChatWidget
+                      connectedWallet={
+                        address && activeConnector && chainId
+                          ? {
+                              walletName: activeConnector.name,
+                              account: address,
+                              chainId: chain.id,
+                            }
+                          : undefined
+                      }
+                    />
+                  </WalletChatProvider>
                 </ToastContextProvider>
               </RainbowKitProvider>
             </Tooltip.Provider>
