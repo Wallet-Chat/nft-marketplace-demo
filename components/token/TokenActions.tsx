@@ -11,7 +11,6 @@ import { ComponentPropsWithoutRef, FC, useState } from 'react'
 import { ChatWithOwner } from 'react-wallet-chat'
 import { MutatorCallback } from 'swr'
 import { useAccount } from 'wagmi'
-import { ChatWithOwner } from 'react-wallet-chat'
 
 type Props = {
   token: ReturnType<typeof useTokens>['data'][0]
