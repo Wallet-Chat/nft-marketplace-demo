@@ -19,14 +19,13 @@ import {
   WagmiConfig,
   createClient,
   configureChains,
+  useSignMessage,
   useAccount,
   useNetwork,
-  useSignMessage,
 } from 'wagmi'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { publicProvider } from 'wagmi/providers/public'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
-import { WalletChatProvider, WalletChatWidget } from 'react-wallet-chat'
 
 import {
   ReservoirKitProvider,
@@ -41,6 +40,7 @@ import ToastContextProvider from 'context/ToastContextProvider'
 import supportedChains from 'utils/chains'
 import { useMarketplaceChain } from 'hooks'
 import ChainContextProvider from 'context/ChainContextProvider'
+import { WalletChatProvider, WalletChatWidget } from 'react-wallet-chat'
 
 //CONFIGURABLE: Use nextjs to load your own custom font: https://nextjs.org/docs/basic-features/font-optimization
 const inter = Inter({
@@ -172,6 +172,10 @@ function MyApp({
             }),
             source: source,
             normalizeRoyalties: NORMALIZE_ROYALTIES,
+            //CONFIGURABLE: Set your marketplace fee and recipient, (fee is in BPS)
+            // Note that this impacts orders created on your marketplace (offers/listings)
+            // marketplaceFee: 250,
+            // marketplaceFeeRecipient: "0xabc"
           }}
           theme={reservoirKitTheme}
         >
@@ -185,17 +189,17 @@ function MyApp({
                 <ToastContextProvider>
                   <WalletChatProvider>
                     <FunctionalComponent {...pageProps} />
+
                     <WalletChatWidget
                       connectedWallet={
                         address && activeConnector && chainId
                           ? {
-                              account: address,
                               walletName: activeConnector.name,
+                              account: address,
                               chainId: chain.id,
                             }
                           : undefined
                       }
-                      signMessage={signMessageAsync}
                     />
                   </WalletChatProvider>
                 </ToastContextProvider>
