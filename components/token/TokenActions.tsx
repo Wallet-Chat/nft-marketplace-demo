@@ -147,13 +147,6 @@ export const TokenActions: FC<Props> = ({
         />
       )}
 
-      {token?.token?.owner && (
-        <ChatWithOwner
-          ownerAddress={token?.token?.owner}
-          render={<Button css={buttonCss} color='gray3' />}
-        />
-      )}
-
       {isTopBidder && !is1155 && (
         <CancelBid
           bidId={token?.market?.topBid?.id as string}
