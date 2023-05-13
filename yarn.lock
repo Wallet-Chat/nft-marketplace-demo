@@ -1988,6 +1988,11 @@
   dependencies:
     "@babel/runtime" "^7.13.10"
 
+"@rainbow-me/rainbowkit-siwe-next-auth@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@rainbow-me/rainbowkit-siwe-next-auth/-/rainbowkit-siwe-next-auth-0.2.0.tgz#ea1004c38990b6a14abec61f2f6286d7bdc16e4a"
+  integrity sha512-U0GPPc5tRhNSLgdLb4sU6eha7qxIJmfNbUmcGeQGh7IR/jw3xFdYYKYaHcEG8rB09/yfEMQodwJiV+vrjta6zQ==
+
 "@rainbow-me/rainbowkit@0.12.2":
   version "0.12.2"
   resolved "https://registry.yarnpkg.com/@rainbow-me/rainbowkit/-/rainbowkit-0.12.2.tgz#efcd807b1ddc34bd7ac9639149e73bf5847ae973"
@@ -2102,6 +2107,16 @@
     node-fetch "2"
     rpc-websockets "^7.5.0"
     superstruct "^0.14.2"
+
+"@spruceid/siwe-parser@*":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@spruceid/siwe-parser/-/siwe-parser-2.0.2.tgz#964dbe9e5611fe95d39e21aa96e67407f610374f"
+  integrity sha512-9WuA0ios2537cWYu39MMeH0O2KdrMKgKlOBUTWRTXQjCYu5B+mHCA0JkCbFaJ/0EjxoVIcYCXIW/DoPEpw+PqA==
+  dependencies:
+    "@noble/hashes" "^1.1.2"
+    apg-js "^4.1.1"
+    uri-js "^4.4.1"
+    valid-url "^1.0.9"
 
 "@stablelib/aead@^1.0.1":
   version "1.0.1"
@@ -2928,6 +2943,11 @@ anymatch@~3.1.2:
   dependencies:
     normalize-path "^3.0.0"
     picomatch "^2.0.4"
+
+apg-js@^4.1.1:
+  version "4.1.3"
+  resolved "https://registry.yarnpkg.com/apg-js/-/apg-js-4.1.3.tgz#0cb9dc99f8830740d7a8f9fc0048fa618ae4d199"
+  integrity sha512-XYyDcoBho8OpnWPRnedMwyL+76ovCtsESerHZEfY39dO4IrEqN97mdEYkOyHa0XTX5+3+U5FmpqPLttK0f7n6g==
 
 arg@^4.1.0:
   version "4.1.3"
@@ -5046,6 +5066,11 @@ proxy-compare@2.5.0:
   resolved "https://registry.yarnpkg.com/proxy-compare/-/proxy-compare-2.5.0.tgz#0387c5e4d283ba9b1c0353bb20def4449b06bbd2"
   integrity sha512-f1us0OsVAJ3tdIMXGQx2lmseYS4YXe4W+sKF5g5ww/jV+5ogMadPt+sIZ+88Ga9kvMJsrRNWzCrKPpr6pMWYbA==
 
+punycode@^2.1.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.3.0.tgz#f67fa67c94da8f4d0cfff981aee4118064199b8f"
+  integrity sha512-rRV+zQD8tVFys26lAGR9WUuS4iUAngJScM+ZRSKtvl5tKeZ2t5bvdNFdNHBW9FWR4guGHlgmsZ1G7BSm2wTbuA==
+
 qrcode@1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/qrcode/-/qrcode-1.5.0.tgz#95abb8a91fdafd86f8190f2836abbfc500c72d1b"
@@ -5221,9 +5246,9 @@ react-style-singleton@^2.2.1:
     tslib "^2.0.0"
 
 react-wallet-chat@^2.5.8:
-  version "2.6.3"
-  resolved "https://registry.yarnpkg.com/react-wallet-chat/-/react-wallet-chat-2.6.3.tgz#d21862f3f7e52676cd4280f25a2a0d1c923ce35b"
-  integrity sha512-XQ9lbdI3bXYJQhUJIm38FxjkDa40i1PbH1eLzQDtAyk3iP+jyJBptIqsHYq5dxSSNF0QlzZywBJRwUMAR0ToPA==
+  version "2.6.4"
+  resolved "https://registry.yarnpkg.com/react-wallet-chat/-/react-wallet-chat-2.6.4.tgz#b3eb48d5d58fb84230faa14d93176485cd0714b8"
+  integrity sha512-N1JMXnyPIcGixlsOaNnV8v8k2YCzzf6YUtYOIWbrjBlvAx+X63F6pPIm1Ak+JMhy2g3IemNQHvfIt3ajyJZgOA==
   dependencies:
     classnames "^2.3.2"
 
@@ -5423,6 +5448,16 @@ simple-swizzle@^0.2.2:
   integrity sha512-JA//kQgZtbuY83m+xT+tXJkmJncGMTFT+C+g2h2R9uxkYIrE2yy9sgmcLhCnw57/WSD+Eh3J97FPEDFnbXnDUg==
   dependencies:
     is-arrayish "^0.3.1"
+
+siwe@^2.1.4:
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/siwe/-/siwe-2.1.4.tgz#005a8be3e61224a86bd3457f60fdaab626f2d1d4"
+  integrity sha512-Dke1Qqa3mgiLm3vjqw/+SQ7dl8WV/Pfk3AlQBF94cBFydTYhztngqYrikzE3X5UTsJ6565dfVbQptszsuYZNYg==
+  dependencies:
+    "@spruceid/siwe-parser" "*"
+    "@stablelib/random" "^1.0.1"
+    uri-js "^4.4.1"
+    valid-url "^1.0.9"
 
 sonic-boom@^2.2.1:
   version "2.8.0"
@@ -5761,6 +5796,13 @@ update-browserslist-db@^1.0.4:
     escalade "^3.1.1"
     picocolors "^1.0.0"
 
+uri-js@^4.4.1:
+  version "4.4.1"
+  resolved "https://registry.yarnpkg.com/uri-js/-/uri-js-4.4.1.tgz#9b1a52595225859e55f669d928f88c6c57f2a77e"
+  integrity sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==
+  dependencies:
+    punycode "^2.1.0"
+
 use-callback-ref@^1.3.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/use-callback-ref/-/use-callback-ref-1.3.0.tgz#772199899b9c9a50526fedc4993fc7fa1f7e32d5"
@@ -5834,6 +5876,11 @@ v8-compile-cache-lib@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/v8-compile-cache-lib/-/v8-compile-cache-lib-3.0.1.tgz#6336e8d71965cb3d35a1bbb7868445a7c05264bf"
   integrity sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==
+
+valid-url@^1.0.9:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/valid-url/-/valid-url-1.0.9.tgz#1c14479b40f1397a75782f115e4086447433a200"
+  integrity sha512-QQDsV8OnSf5Uc30CKSwG9lnhMPe6exHtTXLRYX8uMwKENy640pU+2BgBL0LRbDh/eYRahNCS7aewCx0wf3NYVA==
 
 valtio@1.10.3:
   version "1.10.3"

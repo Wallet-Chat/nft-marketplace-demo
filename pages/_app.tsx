@@ -11,9 +11,12 @@ import { darkTheme, globalReset } from 'stitches.config'
 import '@rainbow-me/rainbowkit/styles.css'
 import {
   RainbowKitProvider,
+  createAuthenticationAdapter,
+  RainbowKitAuthenticationProvider,
   getDefaultWallets,
   darkTheme as rainbowDarkTheme,
   lightTheme as rainbowLightTheme,
+  AuthenticationStatus,
 } from '@rainbow-me/rainbowkit'
 import {
   WagmiConfig,
@@ -41,6 +44,8 @@ import supportedChains from 'utils/chains'
 import { useMarketplaceChain } from 'hooks'
 import ChainContextProvider from 'context/ChainContextProvider'
 import { WalletChatProvider, WalletChatWidget } from 'react-wallet-chat'
+import { RainbowKitSiweNextAuthProvider } from '@rainbow-me/rainbowkit-siwe-next-auth';
+import { SiweMessage } from 'siwe';
 
 //CONFIGURABLE: Use nextjs to load your own custom font: https://nextjs.org/docs/basic-features/font-optimization
 const inter = Inter({
@@ -133,11 +138,6 @@ function MyApp({
     }
   }, [theme])
 
-  const { signMessageAsync } = useSignMessage()
-  const { address, connector: activeConnector } = useAccount()
-  const { chain } = useNetwork()
-  const chainId = chain?.id
-
   const FunctionalComponent = Component as FC
 
   let source = process.env.NEXT_PUBLIC_MARKETPLACE_SOURCE
@@ -148,6 +148,64 @@ function MyApp({
       source = url.host
     } catch (e) {}
   }
+
+const { signMessageAsync } = useSignMessage()
+const { address, connector: activeConnector } = useAccount()
+const { chain } = useNetwork()
+const [ authStatus, setAuthStatus ] = useState<AuthenticationStatus>('unauthenticated')
+const chainId = chain?.id
+
+const authenticationAdapter = createAuthenticationAdapter({
+  getNonce: async () => {
+    let _nonce = ""
+    const response = await fetch(`https://api.v2.walletchat.fun/users/${address}/nonce`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then((response) => response.json())
+      .then(async (usersData: { Nonce: string }) => {
+        console.log('✅[GET][Nonce]:', usersData)
+        _nonce = usersData.Nonce
+      })
+      .catch((error) => {
+        console.log('🚨[GET][Nonce]:', error)
+      })
+    return _nonce;
+  },
+
+  createMessage: ({ nonce, address, chainId }) => {
+    return new SiweMessage({
+      domain: window.location.host,
+      address,
+      statement: 'Sign in with Ethereum to the app.',
+      uri: window.location.origin,
+      version: '1',
+      chainId,
+      nonce,
+    });
+  },
+
+  getMessageBody: ({ message }) => {
+    return message.prepareMessage();
+  },
+
+  verify: async ({ message, signature }) => {
+    // const verifyRes = await fetch('/api/verify', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ message, signature }),
+    // });
+
+    setAuthStatus('authenticated')
+
+    return true;
+  },
+
+  signOut: async () => {
+    //await fetch('/api/logout');
+    console.log("logout")
+  },
+});
 
   return (
     <HotkeysProvider>
@@ -187,21 +245,18 @@ function MyApp({
                 modalSize="compact"
               >
                 <ToastContextProvider>
-                  <WalletChatProvider>
                     <FunctionalComponent {...pageProps} />
 
-                    <WalletChatWidget
-                      connectedWallet={
-                        address && activeConnector && chainId
-                          ? {
-                              walletName: activeConnector.name,
-                              account: address,
-                              chainId: chain.id,
-                            }
-                          : undefined
-                      }
-                    />
-                  </WalletChatProvider>
+                    <WagmiConfig client={wagmiClient}>
+                      <RainbowKitAuthenticationProvider
+                        adapter={authenticationAdapter}
+                        status={authStatus}
+                      >
+                        <RainbowKitProvider chains={chains}>
+                          <Component {...pageProps} />
+                        </RainbowKitProvider>
+                      </RainbowKitAuthenticationProvider>
+                    </WagmiConfig>
                 </ToastContextProvider>
               </RainbowKitProvider>
             </Tooltip.Provider>
