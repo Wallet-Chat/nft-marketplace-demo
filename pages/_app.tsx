@@ -46,6 +46,7 @@ import ChainContextProvider from 'context/ChainContextProvider'
 import { WalletChatProvider, WalletChatWidget } from 'react-wallet-chat'
 import { RainbowKitSiweNextAuthProvider } from '@rainbow-me/rainbowkit-siwe-next-auth';
 import { SiweMessage } from 'siwe';
+import React from 'react'
 
 //CONFIGURABLE: Use nextjs to load your own custom font: https://nextjs.org/docs/basic-features/font-optimization
 const inter = Inter({
@@ -154,6 +155,8 @@ const { address, connector: activeConnector } = useAccount()
 const { chain } = useNetwork()
 const [ authStatus, setAuthStatus ] = useState<AuthenticationStatus>('unauthenticated')
 const chainId = chain?.id
+const [signedMessage, setSignedMessage] = useState('')
+const [messageSignature, setMesssageSignature] = useState('')
 
 const authenticationAdapter = createAuthenticationAdapter({
   getNonce: async () => {
@@ -174,6 +177,7 @@ const authenticationAdapter = createAuthenticationAdapter({
   },
 
   createMessage: ({ nonce, address, chainId }) => {
+    setAuthStatus('loading')
     return new SiweMessage({
       domain: window.location.host,
       address,
@@ -196,6 +200,10 @@ const authenticationAdapter = createAuthenticationAdapter({
     //   body: JSON.stringify({ message, signature }),
     // });
 
+    //this should move into widget somewhere more packaged
+    setSignedMessage(JSON.stringify(message))
+    setMesssageSignature(signature)
+
     setAuthStatus('authenticated')
 
     return true;
@@ -203,7 +211,7 @@ const authenticationAdapter = createAuthenticationAdapter({
 
   signOut: async () => {
     //await fetch('/api/logout');
-    console.log("logout")
+    setAuthStatus('unauthenticated')
   },
 });
 
@@ -245,6 +253,7 @@ const authenticationAdapter = createAuthenticationAdapter({
                 modalSize="compact"
               >
                 <ToastContextProvider>
+                <WalletChatProvider>
                     <FunctionalComponent {...pageProps} />
 
                     <WagmiConfig client={wagmiClient}>
@@ -257,6 +266,28 @@ const authenticationAdapter = createAuthenticationAdapter({
                         </RainbowKitProvider>
                       </RainbowKitAuthenticationProvider>
                     </WagmiConfig>
+
+                    <WalletChatWidget
+                      connectedWallet={
+                        address && activeConnector && chainId
+                          ? {
+                              walletName: activeConnector.name,
+                              account: address,
+                              chainId: chain.id,
+                            }
+                          : undefined
+                      }
+                      signedMessageData={
+                        signedMessage && messageSignature
+                          ? {
+                              signature: messageSignature,
+                              signedMsg: signedMessage,
+                            }
+                          : undefined
+                      }
+                      //signMessage={signMessageAsync}
+                    />
+                  </WalletChatProvider>
                 </ToastContextProvider>
               </RainbowKitProvider>
             </Tooltip.Provider>
