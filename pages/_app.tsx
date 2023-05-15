@@ -201,7 +201,7 @@ const authenticationAdapter = createAuthenticationAdapter({
     // });
 
     //this should move into widget somewhere more packaged
-    setSignedMessage(JSON.stringify(message))
+    setSignedMessage(message.prepareMessage())
     setMesssageSignature(signature)
 
     setAuthStatus('authenticated')
