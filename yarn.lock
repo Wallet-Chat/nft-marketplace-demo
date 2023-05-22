@@ -5245,10 +5245,10 @@ react-style-singleton@^2.2.1:
     invariant "^2.2.4"
     tslib "^2.0.0"
 
-react-wallet-chat@^2.6.10:
-  version "2.6.10"
-  resolved "https://registry.yarnpkg.com/react-wallet-chat/-/react-wallet-chat-2.6.10.tgz#1308320cf333103a3f609bd7b2c1516b74b06206"
-  integrity sha512-kcOt04iFQ4Fz2Y0LIoil2eIb0/q8gdc/X4gFumv3apcXKWFvj6GPxOxYkt6ffZ//ssqcww+DHIV/Zy3MUirZIA==
+react-wallet-chat@^2.6.11:
+  version "2.6.11"
+  resolved "https://registry.yarnpkg.com/react-wallet-chat/-/react-wallet-chat-2.6.11.tgz#94bcddf3f7d16cb5792aa49f9434c9526704625c"
+  integrity sha512-3vpiHqNdPfAnolUqmKRh3OtR321VoGFj2H4XRF6fdJFfi3r20mgW1C0QKUXqKurfoHBFAuo4BrV1ui83blPxmg==
   dependencies:
     classnames "^2.3.2"
 
