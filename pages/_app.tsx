@@ -155,7 +155,7 @@ const { address, connector: activeConnector } = useAccount()
 const { chain } = useNetwork()
 const [ authStatus, setAuthStatus ] = useState<AuthenticationStatus>('unauthenticated')
 const chainId = chain?.id
-const [signedMessage, setSignedMessage] = useState('')
+const [messageToSign, setMessageToSign] = useState('')
 const [messageSignature, setMesssageSignature] = useState('')
 
 const authenticationAdapter = createAuthenticationAdapter({
@@ -201,7 +201,7 @@ const authenticationAdapter = createAuthenticationAdapter({
     // });
 
     //this should move into widget somewhere more packaged
-    setSignedMessage(message.prepareMessage())
+    setMessageToSign(message.prepareMessage())
     setMesssageSignature(signature)
 
     setAuthStatus('authenticated')
@@ -278,10 +278,10 @@ const authenticationAdapter = createAuthenticationAdapter({
                           : undefined
                       }
                       signedMessageData={
-                        signedMessage && messageSignature
+                        messageToSign && messageSignature
                           ? {
                               signature: messageSignature,
-                              signedMsg: signedMessage,
+                              msgToSign: messageToSign,
                             }
                           : undefined
                       }
