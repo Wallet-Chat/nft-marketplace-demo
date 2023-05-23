@@ -285,7 +285,6 @@ const authenticationAdapter = createAuthenticationAdapter({
                             }
                           : undefined
                       }
-                      //signMessage={signMessageAsync}
                     />
                   </WalletChatProvider>
                 </ToastContextProvider>
